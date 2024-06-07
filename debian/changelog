@@ -1,0 +1,6 @@
+kylin-kmre-modules-dkms (3.0.0.0-0k0.1) jammy; urgency=medium
+
+  * Support kernel version 6.5.
+
+ -- machao (launchpad) <machao@kylinos.cn>  Fri, 05 May 2023 17:07:44 +0800
+
