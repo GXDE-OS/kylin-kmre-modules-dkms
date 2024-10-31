@@ -12,6 +12,10 @@ endif
 
 PWD := $(shell pwd)
 
+ifeq ($(CONFIG_RETHUNK),y)
+ccflags-y += -mindirect-branch=thunk-extern -mfunction-return=thunk-extern
+endif
+
 .PHONY: all
 all: clean modules #install
 
