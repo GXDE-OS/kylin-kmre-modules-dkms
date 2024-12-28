@@ -1948,8 +1948,10 @@ static void binder_deferred_fd_close(int fd)
 	twcb = kzalloc(sizeof(*twcb), GFP_KERNEL);
 	if (!twcb)
 		return;
-	init_task_work(&twcb->twork, binder_do_fd_close);
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,19,0)
+	init_task_work(&twcb->twork, binder_do_fd_close);	
+#if  LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
+	twcb->file = file_close_fd(fd);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,19,0)
 	twcb->file = close_fd_get_file(fd);
 #else
 	close_fd_get_file(fd, &twcb->file);

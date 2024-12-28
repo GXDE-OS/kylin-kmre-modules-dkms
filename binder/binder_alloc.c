@@ -238,7 +238,11 @@ static int binder_update_page_range(struct binder_alloc *alloc, int allocate,
 		if (page->page_ptr) {
 			trace_binder_alloc_lru_start(alloc, index);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
+			on_lru = list_lru_del_obj(&binder_alloc_lru, &page->lru);
+#else
 			on_lru = list_lru_del(&binder_alloc_lru, &page->lru);
+#endif
 			WARN_ON(!on_lru);
 
 			trace_binder_alloc_lru_end(alloc, index);
@@ -289,7 +293,11 @@ free_range:
 
 		trace_binder_free_lru_start(alloc, index);
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
+		ret = list_lru_add_obj(&binder_alloc_lru, &page->lru);
+#else
 		ret = list_lru_add(&binder_alloc_lru, &page->lru);
+#endif
 		WARN_ON(!ret);
 
 		trace_binder_free_lru_end(alloc, index);
@@ -912,8 +920,13 @@ void binder_alloc_deferred_release(struct binder_alloc *alloc)
 			if (!alloc->pages[i].page_ptr)
 				continue;
 
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
+			on_lru = list_lru_del_obj(&binder_alloc_lru,
+					      &alloc->pages[i].lru);
+#else
 			on_lru = list_lru_del(&binder_alloc_lru,
 					      &alloc->pages[i].lru);
+#endif
 			page_addr = alloc->buffer + i * PAGE_SIZE;
 			binder_alloc_debug(BINDER_DEBUG_BUFFER_ALLOC,
 				     "%s: %d: page %d at %pK %s\n",
@@ -1199,7 +1212,10 @@ int binder_alloc_shrinker_init(void)
 	int ret = list_lru_init(&binder_alloc_lru);
 
 	if (ret == 0) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
+	shrinker_register(&binder_shrinker);
+	ret = 0;
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
 		ret = register_shrinker(&binder_shrinker, "android-binder");
 #else
 		ret = register_shrinker(&binder_shrinker);

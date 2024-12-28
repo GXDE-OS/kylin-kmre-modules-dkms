@@ -10,3 +10,4 @@ modules.order
 *.mod
 *.mod.c
 *.mod.cmd
+.vscode

@@ -379,7 +379,11 @@ ashmem_vmfile_get_unmapped_area(struct file *file, unsigned long addr,
 				unsigned long len, unsigned long pgoff,
 				unsigned long flags)
 {
+#if LINUX_VERSION_CODE > KERNEL_VERSION(6,9,0)
+	return file->f_op->get_unmapped_area(file, addr, len, pgoff, flags);
+#else
 	return current->mm->get_unmapped_area(file, addr, len, pgoff, flags);
+#endif
 }
 
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5,18,0)
@@ -1064,8 +1068,10 @@ static int __init ashmem_init(void)
 		pr_err("failed to register misc device!\n");
 		goto out_free2;
 	}
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
+	shrinker_register(&ashmem_shrinker);
+	ret = 0;
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6,0,0)
 	ret = register_shrinker(&ashmem_shrinker, "android-ashmem");
 #else
 	ret = register_shrinker(&ashmem_shrinker);
@@ -1092,7 +1098,11 @@ out:
 static void __exit ashmem_exit(void)
 {
 	misc_deregister(&ashmem_misc);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,9,0)
+	shrinker_free(&ashmem_shrinker);
+#else
 	unregister_shrinker(&ashmem_shrinker);
+#endif
 	kmem_cache_destroy(ashmem_range_cachep);
 	kmem_cache_destroy(ashmem_area_cachep);
 }
