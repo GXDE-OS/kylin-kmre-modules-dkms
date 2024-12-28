@@ -1,3 +1,9 @@
+kylin-kmre-modules-dkms (3.0.0.0-gxde1) UNRELEASED; urgency=medium
+
+  * 支持内核 6.11.10
+
+ -- gfdgd_xi <3025613752@qq.com>  Sat, 28 Dec 2024 20:56:07 +0800
+
 kylin-kmre-modules-dkms (3.0.0.0-0k0.1) jammy; urgency=medium
 
   * Support kernel version 6.5.
