@@ -14,6 +14,7 @@
 #include <linux/etherdevice.h>
 #include <linux/math64.h>
 #include <linux/module.h>
+#include <linux/version.h>
 
 static struct wiphy *common_wiphy;
 
@@ -506,11 +507,21 @@ static rx_handler_result_t virt_wifi_rx_handler(struct sk_buff **pskb)
 }
 
 /* Called with rtnl lock held. */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,13,0)
+static int virt_wifi_newlink(struct net_device *dev,
+			     struct rtnl_newlink_params *params,
+			     struct netlink_ext_ack *extack)
+#else
 static int virt_wifi_newlink(struct net *src_net, struct net_device *dev,
 			     struct nlattr *tb[], struct nlattr *data[],
 			     struct netlink_ext_ack *extack)
+#endif
 {
 	struct virt_wifi_netdev_priv *priv = netdev_priv(dev);
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,13,0)	
+	struct net *link_net = rtnl_newlink_link_net(params);
+	struct nlattr **tb = params->tb;
+#endif
 	int err;
 
 	if (!tb[IFLA_LINK])
@@ -519,8 +530,13 @@ static int virt_wifi_newlink(struct net *src_net, struct net_device *dev,
 	netif_carrier_off(dev);
 
 	priv->upperdev = dev;
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,13,0)	
+	priv->lowerdev = __dev_get_by_index(link_net,
+					    nla_get_u32(tb[IFLA_LINK]));
+#else
 	priv->lowerdev = __dev_get_by_index(src_net,
 					    nla_get_u32(tb[IFLA_LINK]));
+#endif
 
 	if (!priv->lowerdev)
 		return -ENODEV;

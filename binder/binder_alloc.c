@@ -1083,7 +1083,9 @@ void binder_alloc_vma_close(struct binder_alloc *alloc)
  */
 enum lru_status binder_alloc_free_page(struct list_head *item,
 				       struct list_lru_one *lru,
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,13,0)
 				       spinlock_t *lock,
+#endif
 				       void *cb_arg)
 	__must_hold(lock)
 {
@@ -1118,7 +1120,11 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 	vma = binder_alloc_get_vma(alloc);
 
 	list_lru_isolate(lru, item);
+#if LINUX_VERSION_CODE > KERNEL_VERSION(6,13,0)
+	spin_unlock(&lru->lock);
+#else
 	spin_unlock(lock);
+#endif
 
 	if (vma) {
 		trace_binder_unmap_user_start(alloc, index);
@@ -1141,7 +1147,9 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 
 	trace_binder_unmap_kernel_end(alloc, index);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(6,13,0)
 	spin_lock(lock);
+#endif
 	mutex_unlock(&alloc->mutex);
 	return LRU_REMOVED_RETRY;
 
@@ -1168,7 +1176,10 @@ binder_shrink_count(struct shrinker *shrink, struct shrink_control *sc)
 static unsigned long
 binder_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5,19,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,13,0)
+	return list_lru_walk(&binder_alloc_lru, binder_alloc_free_page,
+			    NULL, sc->nr_to_scan);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(5,19,0)
 	return list_lru_walk(&binder_alloc_lru, binder_alloc_free_page,
 			    NULL, sc->nr_to_scan);
 #else
