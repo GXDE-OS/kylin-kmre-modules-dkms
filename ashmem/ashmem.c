@@ -472,7 +472,11 @@ static int ashmem_mmap(struct file *file, struct vm_area_struct *vma)
 			name = asma->name;
 
 		/* ... and allocate the backing shmem file */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(7,0,0)
+		vmfile = shmem_file_setup(name, asma->size, vma->flags);
+#else
 		vmfile = shmem_file_setup(name, asma->size, vma->vm_flags);
+#endif
 		if (IS_ERR(vmfile)) {
 			ret = PTR_ERR(vmfile);
 			goto out;
