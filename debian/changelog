@@ -1,9 +1,9 @@
-kylin-kmre-modules-dkms (3.0.0.0-gxde4) UNRELEASED; urgency=medium
+kylin-kmre-modules-dkms (3.0.0.0-gxde5) UNRELEASED; urgency=medium
 
-  * 支持内核 7.0.4
+  * 支持内核 7.3
   * Fix build problem for kernel which doesn't enable CONFIG_RETHUNK.
 
- -- gfdgd_xi <3025613752@qq.com>  Mon, 11 May 2026 22:33:19 +0800
+ -- gfdgd_xi <3025613752@qq.com>  Tue, 20 Oct 2026 21:57:01 +0800
 
 kylin-kmre-modules-dkms (3.0.0.0-0k0.1) jammy; urgency=medium
 
