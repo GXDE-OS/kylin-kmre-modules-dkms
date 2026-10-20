@@ -1129,7 +1129,9 @@ enum lru_status binder_alloc_free_page(struct list_head *item,
 	if (vma) {
 		trace_binder_unmap_user_start(alloc, index);
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(6,3,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(7,1,0)
+		zap_vma_range(vma, page_addr, PAGE_SIZE);
+#elif LINUX_VERSION_CODE >= KERNEL_VERSION(6,3,0)
 		zap_page_range_single(vma, page_addr, PAGE_SIZE, NULL);
 #else
 		zap_page_range(vma, page_addr, PAGE_SIZE);

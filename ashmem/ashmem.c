@@ -1007,7 +1007,12 @@ static void ashmem_show_fdinfo(struct seq_file *m, struct file *file)
 	mutex_lock(&ashmem_mutex);
 
 	if (asma->file)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(7,0,0)
+		seq_printf(m, "inode:\t%llu\n",
+			   (unsigned long long)file_inode(asma->file)->i_ino);
+#else
 		seq_printf(m, "inode:\t%ld\n", file_inode(asma->file)->i_ino);
+#endif
 
 	if (asma->name[ASHMEM_NAME_PREFIX_LEN] != '\0')
 		seq_printf(m, "name:\t%s\n",

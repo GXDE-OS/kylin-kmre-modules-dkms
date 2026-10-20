@@ -305,8 +305,8 @@ static int virt_wifi_disconnect(struct wiphy *wiphy, struct net_device *netdev,
 }
 
 /* Called with the rtnl lock held. */
-static int virt_wifi_get_station(struct wiphy *wiphy, struct net_device *dev,
-				 const u8 *mac, struct station_info *sinfo)
+static int virt_wifi_get_station_common(struct net_device *dev, const u8 *mac,
+					struct station_info *sinfo)
 {
 	struct virt_wifi_netdev_priv *priv = netdev_priv(dev);
 
@@ -330,8 +330,10 @@ static int virt_wifi_get_station(struct wiphy *wiphy, struct net_device *dev,
 }
 
 /* Called with the rtnl lock held. */
-static int virt_wifi_dump_station(struct wiphy *wiphy, struct net_device *dev,
-				  int idx, u8 *mac, struct station_info *sinfo)
+static int virt_wifi_dump_station_common(struct wiphy *wiphy,
+					 struct net_device *dev,
+					 int idx, u8 *mac,
+					 struct station_info *sinfo)
 {
 	struct virt_wifi_netdev_priv *priv = netdev_priv(dev);
 
@@ -341,8 +343,40 @@ static int virt_wifi_dump_station(struct wiphy *wiphy, struct net_device *dev,
 		return -ENOENT;
 
 	ether_addr_copy(mac, fake_router_bssid);
-	return virt_wifi_get_station(wiphy, dev, fake_router_bssid, sinfo);
+	return virt_wifi_get_station_common(dev, fake_router_bssid, sinfo);
 }
+
+/*
+ * Since v7.1 the cfg80211 station callbacks take a wireless_dev instead
+ * of a net_device ("wifi: nl80211/cfg80211: support stations of non-netdev
+ * interfaces").
+ */
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(7, 1, 0)
+static int virt_wifi_get_station(struct wiphy *wiphy, struct wireless_dev *wdev,
+				 const u8 *mac, struct station_info *sinfo)
+{
+	return virt_wifi_get_station_common(wdev->netdev, mac, sinfo);
+}
+
+static int virt_wifi_dump_station(struct wiphy *wiphy, struct wireless_dev *wdev,
+				  int idx, u8 *mac, struct station_info *sinfo)
+{
+	return virt_wifi_dump_station_common(wiphy, wdev->netdev, idx, mac,
+					     sinfo);
+}
+#else
+static int virt_wifi_get_station(struct wiphy *wiphy, struct net_device *dev,
+				 const u8 *mac, struct station_info *sinfo)
+{
+	return virt_wifi_get_station_common(dev, mac, sinfo);
+}
+
+static int virt_wifi_dump_station(struct wiphy *wiphy, struct net_device *dev,
+				  int idx, u8 *mac, struct station_info *sinfo)
+{
+	return virt_wifi_dump_station_common(wiphy, dev, idx, mac, sinfo);
+}
+#endif
 
 static const struct cfg80211_ops virt_wifi_cfg80211_ops = {
 	.scan = virt_wifi_scan,

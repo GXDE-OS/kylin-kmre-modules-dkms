@@ -79,6 +79,15 @@
 #include "binder_internal.h"
 #include "binder_trace.h"
 
+/*
+ * task_euid() was removed from the kernel (v7.1+) in favour of accessing
+ * the cred fields through task_cred_xxx() directly. Provide it ourselves on
+ * newer kernels so the same code keeps building on older ones.
+ */
+#ifndef task_euid
+#define task_euid(tsk)		task_cred_xxx((tsk), euid)
+#endif
+
 static HLIST_HEAD(binder_deferred_list);
 static DEFINE_MUTEX(binder_deferred_lock);
 
